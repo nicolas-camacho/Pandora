@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../dist/index.iife.js"></script>
+</head>
+<body>
+    <button id="mybutton">Click me</button>
+    <div>
+        <h1>Counter: <span id="counterValue"></span></h1>
+    </div>
+    <script>
+        const element = document.getElementById('counterValue');
+
+        const counter = new Pandora.State(0, (value) => {
+            element.innerText = value;
+        });
+
+        element.innerText = counter.get();
+
+        const registerInConsole = (value) => {
+            console.log('Counter value changed to', value);
+        }
+
+        const changeBackground = (value) => {
+            if (value % 2 === 0) {
+                document.body.style.backgroundColor = 'lightblue';
+            } else {
+                document.body.style.backgroundColor = 'white';
+            }
+        }
+
+        counter.link([registerInConsole, changeBackground]);
+
+        const increment = () => {
+            const currentValue = counter.get();
+            counter.update(currentValue + 1);
+        }
+
+        document.getElementById('mybutton').onclick = increment;
+    </script>
+</body>
+</html>

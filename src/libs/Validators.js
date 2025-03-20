@@ -21,12 +21,12 @@ const isValidState = (state) => {
 /**
  * Validates the reactor(s).
  * @param {function|function[]} reactors - The reactor(s) to validate.
- * @returns {function|function[]} - Returns the reactor(s) if valid.
+ * @returns {function[]} - Returns the reactor(s) if valid.
  * @throws {Error} - Throws an error if the reactor(s) are invalid
  */
 const isValidReactor = (reactors) => {
     if (typeof reactors === 'function') {
-        return reactors;
+        return [reactors];
     };
 
     const isFunction = (fn) => typeof fn === 'function';

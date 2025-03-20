@@ -1,16 +1,27 @@
 import { isValidShelf, isValidReactorsObject, isValidReactor } from "./libs/Validators";
 import State from "./State";
 
+/**
+ * A simple state management class that allows you to store and update a states, and link functions to those states.
+ * @class Shelf
+ * @param {object} states - An object with the initial states to store.
+ * @param {function[]|object} reactors - An array of functions or an object with functions to call when the state changes.
+ * @throws {Error} - Throws an error if the reactors are not a object or an array.
+ * @throws {Error} - Throws an error if the states are not an object.
+ * @throws {Error} - Throws an error if the states are not valid.
+ * @throws {Error} - Throws an error if the reactors are not valid.
+ */
 class Shelf {
     constructor(states = {}, reactors = {}) {
         const incomingStates = isValidShelf(states);
 
-        if (!Array.isArray(reactors) || typeof reactors !== 'object') {
+        if (!Array.isArray(reactors) && typeof reactors !== 'object') {
             throw new Error(`Reactors must be an object or an array. Received: ${typeof reactors}`);
         } else if (Array.isArray(reactors)) {
-            this.reactors = isValidReactor(reactors);
+            this.reactors['*'] = isValidReactor(reactors);
         } else {
-            this.reactors = isValidReactorsObject(initialStates, reactors);
+            this.reactors = isValidReactorsObject(incomingStates, reactors);
+            this.reactors['*'] = [];
             let initialStates = {};
             for (let state in incomingStates) {
                 initialStates[state] = new State(incomingStates[state], this.reactors[state]);
@@ -64,8 +75,10 @@ class Shelf {
 
         for (let state in updates) {
             if (this.states[state]) {
-                this.states[state].update(states[state]);
-                updatedStates[state] = this.states[state].get();
+                this.states[state].update(updates[state]);
+                const newValue = this.states[state].get();
+                updatedStates[state] = newValue;
+                this.reactors['*'].forEach(reactor => reactor(newValue));
             } else {
                 const newState = new State(updates[state]);
                 this.states[state] = newState;
@@ -75,6 +88,27 @@ class Shelf {
 
         return updatedStates;
     };
+
+    /**
+     * Links a an array of functions to the states. The function(s) will be called every time the state changes.
+     * @param {function[]|object} reactors - The object or array of functions to call when the state changes.
+     * @throws {Error} - Throws an error if the reactors are not a object or an array.
+     */
+    links(reactors) {
+        if (!Array.isArray(reactors) || typeof reactors !== 'object') {
+            throw new Error(`Reactors must be an object or an array. Received: ${typeof reactors}`);
+        }
+
+        if (Array.isArray(reactors)) {
+            const newReactors = isValidReactor(reactors);
+            this.reactors['*'].push(...newReactors);
+        } else {
+            const newReactors = isValidReactorsObject(this.states, reactors);
+            for (let reactor in newReactors) {
+                this.states[reactor].link(newReactors[reactor]);
+            }
+        }
+    }
 };
 
 export default Shelf;

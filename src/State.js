@@ -4,12 +4,12 @@ import { isValidReactor, isValidState } from "./libs/Validators";
  * A simple state management class that allows you to store and update a state, and link functions to it.
  * @class State
  * @param {any} initialState - The initial state value.
- * @param {function[]} reactors - An array of functions to call when the state changes.
+ * @param {function[]|function} reactors - An array of functions to call when the state changes.
  */
 class State {
     constructor(initialState = {}, reactors = []) {
         this.state = isValidState(initialState);
-        this.reactors = isValidReactor(reactors);
+        this.reactors = [...isValidReactor(reactors)];
     }
 
     /**
