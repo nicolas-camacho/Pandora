@@ -1,4 +1,4 @@
-import { isValidReactor } from "./libs/Validators";
+import { isValidReactor, isValidState } from "./libs/Validators";
 
 /**
  * A simple state management class that allows you to store and update a state, and link functions to it.
@@ -8,8 +8,8 @@ import { isValidReactor } from "./libs/Validators";
  */
 class State {
     constructor(initialState = {}, reactors = []) {
-        this.state = initialState;
-        this.reactors = isValidReactor(reactors) ? [...reactors] : [];
+        this.state = isValidState(initialState);
+        this.reactors = isValidReactor(reactors);
     }
 
     /**
@@ -18,9 +18,11 @@ class State {
      * @param {any} value - The new state value to set. Can be an object or any other type.
      * @returns {any} - The updated state.
      */
-    set(value) {
-        if (typeof value === 'object' && typeof this.state === 'object') {
-            const newObject = { ...this.state, ...value };
+    update(value) {
+        const newState = isValidState(value);
+
+        if (typeof newState === 'object' && typeof this.state === 'object') {
+            const newObject = { ...this.state, ...newState };
             if (JSON.stringify(newObject) !== JSON.stringify(this.state)) {
                 this.state = newObject;
                 if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
@@ -29,8 +31,8 @@ class State {
                 }, 50);
             }
         } else {
-            if (value !== this.state) {
-                this.state = value;
+            if (newState !== this.state) {
+                this.state = newState;
                 this.reactors.forEach(reactor => reactor(this.state));
             }
         }
