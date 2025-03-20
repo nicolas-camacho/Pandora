@@ -1,0 +1,64 @@
+import { isValidReactor } from "./libs/Validators";
+
+/**
+ * A simple state management class that allows you to store and update a state, and link functions to it.
+ * @class State
+ * @param {any} initialState - The initial state value.
+ * @param {function[]} reactors - An array of functions to call when the state changes.
+ */
+class State {
+    constructor(initialState = {}, reactors = []) {
+        this.state = initialState;
+        this.reactors = isValidReactor(reactors) ? [...reactors] : [];
+    }
+
+    /**
+     * Updates the state with the provided value. If the current state and the new value are objects,
+     * they will be merged. If the state changes, reactors will be notified after a debounce delay.
+     * @param {any} value - The new state value to set. Can be an object or any other type.
+     * @returns {any} - The updated state.
+     */
+    set(value) {
+        if (typeof value === 'object' && typeof this.state === 'object') {
+            const newObject = { ...this.state, ...value };
+            if (JSON.stringify(newObject) !== JSON.stringify(this.state)) {
+                this.state = newObject;
+                if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+                this.debounceTimeout = setTimeout(() => {
+                    this.reactors.forEach(reactor => reactor(this.state));
+                }, 50);
+            }
+        } else {
+            if (value !== this.state) {
+                this.state = value;
+                this.reactors.forEach(reactor => reactor(this.state));
+            }
+        }
+
+        return this.state;
+    }
+
+    /**
+     * Return the current state.
+     * @returns {any} - The current state.
+     */
+    get() {
+        return this.state;
+    }
+
+    /**
+     * Links a function or an array of functions to the state. The function(s) will be called every time the state changes.
+     * @param {function|function[]} reactor - The function or array of functions to call when the state changes.
+     */
+    link(reactor) {
+        if (isValidReactor(reactor)) {
+            if (typeof reactor === 'function') {
+                this.reactors.push(reactor);
+            } else {
+                this.reactors.push(...reactor);
+            }
+        }
+    }
+}
+
+export default State;
