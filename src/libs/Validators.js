@@ -45,6 +45,9 @@ const isValidReactor = (reactors) => {
  */
 const isValidShelf = (shelf) => {
     if (typeof shelf === 'object' && shelf !== null && !Array.isArray(shelf)) {
+        if('*' in shelf) {
+            throw new Error(`The shelf object cannot contain a key named "*", since is reserved for global reactors.`);
+        }
         return isValidState(shelf);
     } else {
         throw new Error(`The shelf must be an object, if you are trying to create a single state consider using the State class. Received: ${typeof obj}`);

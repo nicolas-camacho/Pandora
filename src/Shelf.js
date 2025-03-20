@@ -75,10 +75,12 @@ class Shelf {
 
         for (let state in updates) {
             if (this.states[state]) {
-                this.states[state].update(updates[state]);
-                const newValue = this.states[state].get();
-                updatedStates[state] = newValue;
-                this.reactors['*'].forEach(reactor => reactor(newValue));
+                if (this.states[state].get() !== updates[state]) {
+                    this.states[state].update(updates[state]);
+                    const newValue = this.states[state].get();
+                    updatedStates[state] = newValue;
+                    this.reactors['*'].forEach(reactor => reactor(newValue));
+                }
             } else {
                 const newState = new State(updates[state]);
                 this.states[state] = newState;
@@ -95,7 +97,7 @@ class Shelf {
      * @throws {Error} - Throws an error if the reactors are not a object or an array.
      */
     links(reactors) {
-        if (!Array.isArray(reactors) || typeof reactors !== 'object') {
+        if (!Array.isArray(reactors) && typeof reactors !== 'object') {
             throw new Error(`Reactors must be an object or an array. Received: ${typeof reactors}`);
         }
 
