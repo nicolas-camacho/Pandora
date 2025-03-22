@@ -30,7 +30,7 @@ const isValidReactor = (reactors) => {
     };
 
     const isFunction = (fn) => typeof fn === 'function';
-    if (Array.isArray(reactors) && reactors.every(isFunction)) {
+    if (Array.isArray(reactors) && (reactors.every(isFunction || reactors.length === 0))) {
         return reactors;
     }
 
@@ -39,7 +39,7 @@ const isValidReactor = (reactors) => {
 
 /**
  * Validates the shelf object.
- * @param {object} shelf - The shefl object to validate.
+ * @param {object} shelf - The shelf object to validate.
  * @returns {object} - Returns the shelf object if valid.
  * @throws {Error} - Throws an error if the shelf object is invalid.
  */

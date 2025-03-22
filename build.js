@@ -1,63 +1,63 @@
-const esbuild = require('esbuild');
-const { nodeExternalsPlugin } = require('esbuild-node-externals');
-const fs = require('fs');
-const path = require('path');
+import * as esbuild from "https://deno.land/x/esbuild@v0.25.0/mod.js";
+import { ensureDir } from "@std/fs";
 
-const distDir = path.join(__dirname, 'dist');
-if (!fs.existsSync(distDir)) {
-  fs.mkdirSync(distDir, { recursive: true });
-}
+// Aseguramos que el directorio dist exista
+await ensureDir("./dist");
 
+// Configuración base compartida para todos los formatos
 const baseConfig = {
-  entryPoints: ['src/Pandora.js'],
+  entryPoints: ["./src/Pandora.js"],
   bundle: true,
   minify: false,
   sourcemap: true,
-  target: ['es2020'],
-  platform: 'neutral',
-  plugins: [nodeExternalsPlugin()],
-  legalComments: 'inline',
+  target: ["es2020"],
+  // Preserva los comentarios JSDoc en el output
+  legalComments: "inline",
 };
 
-// ESM build
+// Build ESM
 async function buildESM() {
   await esbuild.build({
     ...baseConfig,
-    format: 'esm',
-    outfile: 'dist/index.esm.js',
+    format: "esm",
+    outfile: "./dist/index.esm.js",
   });
-  console.log('✅ Build ESM completed');
+  console.log("✅ Build ESM completado");
 }
 
-// CommonJS build
+// Build CJS
 async function buildCJS() {
   await esbuild.build({
     ...baseConfig,
-    format: 'cjs',
-    outfile: 'dist/index.cjs.js',
+    format: "cjs",
+    outfile: "./dist/index.cjs.js",
   });
-  console.log('✅ Build CJS completed');
+  console.log("✅ Build CJS completado");
 }
 
-// IIFE build
+// Build IIFE
 async function buildIIFE() {
   await esbuild.build({
     ...baseConfig,
-    format: 'iife',
-    globalName: 'Pandora',
-    outfile: 'dist/index.iife.js',
+    format: "iife",
+    globalName: "Pandora",
+    outfile: "./dist/index.iife.js",
   });
-  console.log('✅ Build IIFE completed');
+  console.log("✅ Build IIFE completado");
 }
 
-async function build() {
+// Ejecutar todos los builds
+async function runBuilds() {
   try {
     await Promise.all([buildESM(), buildCJS(), buildIIFE()]);
-    console.log('✅ ¡All builds completed succesfully!');
+    console.log("✅ ¡Todos los builds completados con éxito!");
   } catch (error) {
-    console.error('❌ Error building:', error);
-    process.exit(1);
+    console.error("❌ Error de build:", error);
+    Deno.exit(1);
+  } finally {
+    // Importante: detener el servicio de esbuild cuando hayas terminado
+    esbuild.stop();
   }
 }
 
-build();
+await runBuilds();

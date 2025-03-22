@@ -1,5 +1,5 @@
-import { isValidShelf, isValidReactorsObject, isValidReactor } from "./libs/Validators";
-import State from "./State";
+import { isValidShelf, isValidReactorsObject, isValidReactor } from "./libs/Validators.js";
+import State from "./State.js";
 
 /**
  * A simple state management class that allows you to store and update a states, and link functions to those states.
@@ -14,16 +14,21 @@ import State from "./State";
 class Shelf {
     constructor(states = {}, reactors = {}) {
         const incomingStates = isValidShelf(states);
+        this.states = {};
+        this.reactors = {'*': []};
 
         if (!Array.isArray(reactors) && typeof reactors !== 'object') {
             throw new Error(`Reactors must be an object or an array. Received: ${typeof reactors}`);
         } else if (Array.isArray(reactors)) {
             this.reactors['*'] = isValidReactor(reactors);
+            for(const state in incomingStates) {
+                this.states[state] = new State(incomingStates[state], []);
+            }
         } else {
             this.reactors = isValidReactorsObject(incomingStates, reactors);
             this.reactors['*'] = [];
-            let initialStates = {};
-            for (let state in incomingStates) {
+            const initialStates = {};
+            for (const state in incomingStates) {
                 initialStates[state] = new State(incomingStates[state], this.reactors[state]);
             };
             this.states = initialStates;
@@ -39,7 +44,7 @@ class Shelf {
     get(stateNames) {
         const currentState = {};
         if (stateNames === undefined) {
-            for (let state in this.states) {
+            for (const state in this.states) {
                 currentState[state] = this.states[state].get();
             };
             return currentState; 
@@ -47,7 +52,7 @@ class Shelf {
             return this.states[stateNames].get();
         } else if (Array.isArray(stateNames)) {
             if (stateNames.every(state => typeof state === 'string')) {
-                for (let state of stateNames) {
+                for (const state of stateNames) {
                     currentState[state] = this.states[state].get();
                 }
                 return currentState;
@@ -73,13 +78,15 @@ class Shelf {
 
         const updatedStates = {};
 
-        for (let state in updates) {
+        for (const state in updates) {
             if (this.states[state]) {
                 if (this.states[state].get() !== updates[state]) {
                     this.states[state].update(updates[state]);
                     const newValue = this.states[state].get();
                     updatedStates[state] = newValue;
-                    this.reactors['*'].forEach(reactor => reactor(newValue));
+                    if(this.reactors['*'] > 0) {
+                        this.reactors['*'].forEach(reactor => reactor(newValue));
+                    }
                 }
             } else {
                 const newState = new State(updates[state]);
@@ -106,7 +113,7 @@ class Shelf {
             this.reactors['*'].push(...newReactors);
         } else {
             const newReactors = isValidReactorsObject(this.states, reactors);
-            for (let reactor in newReactors) {
+            for (const reactor in newReactors) {
                 this.states[reactor].link(newReactors[reactor]);
             }
         }

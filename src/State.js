@@ -1,4 +1,4 @@
-import { isValidReactor, isValidState } from "./libs/Validators";
+import { isValidReactor, isValidState } from "./libs/Validators.js";
 
 /**
  * A simple state management class that allows you to store and update a state, and link functions to it.
@@ -9,7 +9,7 @@ import { isValidReactor, isValidState } from "./libs/Validators";
 class State {
     constructor(initialState = {}, reactors = []) {
         this.state = isValidState(initialState);
-        this.reactors = [...isValidReactor(reactors)];
+        this.reactors = isValidReactor(reactors);
     }
 
     /**
@@ -22,9 +22,12 @@ class State {
         const newState = isValidState(value);
 
         if (typeof newState === 'object' && typeof this.state === 'object') {
-            const newObject = { ...this.state, ...newState };
-            if (JSON.stringify(newObject) !== JSON.stringify(this.state)) {
-                this.state = newObject;
+            let isDiff = false;
+            for (const key in newState) {
+                if (this.state[key] !== newState[key] && this.state[key] !== undefined) isDiff = true;
+                this.state[key] = newState[key]
+            }
+            if (isDiff && this.reactors.length > 0) {
                 if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
                 this.debounceTimeout = setTimeout(() => {
                     this.reactors.forEach(reactor => reactor(this.state));
@@ -33,7 +36,12 @@ class State {
         } else {
             if (newState !== this.state) {
                 this.state = newState;
-                this.reactors.forEach(reactor => reactor(this.state));
+                if (this.reactors.length > 0) {
+                    if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+                    this.debounceTimeout = setTimeout(() => {
+                        this.reactors.forEach(reactor => reactor(this.state));
+                    }, 50);
+                }
             }
         }
 

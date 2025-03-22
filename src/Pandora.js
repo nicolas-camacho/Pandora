@@ -1,4 +1,4 @@
-import Shelf from "./Shelf";
-import State from "./State";
+import Shelf from "./Shelf.js";
+import State from "./State.js";
 
 export { Shelf, State };
