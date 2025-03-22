@@ -1,15 +1,15 @@
-import { isValidReactor } from "./libs/Validators";
+import { isValidReactor, isValidState } from "./libs/Validators.js";
 
 /**
  * A simple state management class that allows you to store and update a state, and link functions to it.
  * @class State
  * @param {any} initialState - The initial state value.
- * @param {function[]} reactors - An array of functions to call when the state changes.
+ * @param {function[]|function} reactors - An array of functions to call when the state changes.
  */
 class State {
     constructor(initialState = {}, reactors = []) {
-        this.state = initialState;
-        this.reactors = isValidReactor(reactors) ? [...reactors] : [];
+        this.state = isValidState(initialState);
+        this.reactors = isValidReactor(reactors);
     }
 
     /**
@@ -18,20 +18,30 @@ class State {
      * @param {any} value - The new state value to set. Can be an object or any other type.
      * @returns {any} - The updated state.
      */
-    set(value) {
-        if (typeof value === 'object' && typeof this.state === 'object') {
-            const newObject = { ...this.state, ...value };
-            if (JSON.stringify(newObject) !== JSON.stringify(this.state)) {
-                this.state = newObject;
+    update(value) {
+        const newState = isValidState(value);
+
+        if (typeof newState === 'object' && typeof this.state === 'object') {
+            let isDiff = false;
+            for (const key in newState) {
+                if (this.state[key] !== newState[key] && this.state[key] !== undefined) isDiff = true;
+                this.state[key] = newState[key]
+            }
+            if (isDiff && this.reactors.length > 0) {
                 if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
                 this.debounceTimeout = setTimeout(() => {
                     this.reactors.forEach(reactor => reactor(this.state));
                 }, 50);
             }
         } else {
-            if (value !== this.state) {
-                this.state = value;
-                this.reactors.forEach(reactor => reactor(this.state));
+            if (newState !== this.state) {
+                this.state = newState;
+                if (this.reactors.length > 0) {
+                    if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+                    this.debounceTimeout = setTimeout(() => {
+                        this.reactors.forEach(reactor => reactor(this.state));
+                    }, 50);
+                }
             }
         }
 
