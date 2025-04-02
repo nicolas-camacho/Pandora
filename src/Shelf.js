@@ -84,7 +84,7 @@ class Shelf {
                     this.states[state].update(updates[state]);
                     const newValue = this.states[state].get();
                     updatedStates[state] = newValue;
-                    if(this.reactors['*'] > 0) {
+                    if(this.reactors['*'].length > 0) {
                         this.reactors['*'].forEach(reactor => reactor(newValue));
                     }
                 }
